@@ -15,7 +15,7 @@ node default {
   }
 }
 
-node 'jenkins.infra.test.rcarrillocruz.lol' {
+node 'jenkins.your.own.domain' {
   class { 'openstack_project::jenkins':
     project_config_repo     => 'https://git.openstack.org/openstack-infra/project-config',
     jenkins_jobs_password   => 'openstack',
