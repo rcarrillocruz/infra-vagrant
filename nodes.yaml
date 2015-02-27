@@ -1,0 +1,9 @@
+---
+jenkins:
+  image: <glance image name for jenkins> 
+  flavor: <jenkins instance flavor> 
+  hostname: <jenkins hostname> 
+  domain: <jenkins domain>
+  network: <neutron network name>
+  ip: <jenkins private IP> 
+  floating_ip: <jenkins floating IP> 

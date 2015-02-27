@@ -1,0 +1,42 @@
+require 'vagrant-openstack-provider'
+require 'yaml'
+
+nodes = YAML.load_file('../nodes.yaml')
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "dummy"
+
+  config.ssh.private_key_path = "~/.ssh/id_rsa"
+  config.ssh.forward_agent = true
+  config.ssh.username      = "ubuntu"
+
+  config.vm.provider :openstack do |os_defaults|
+    os_defaults.openstack_auth_url = "#{ENV['OS_AUTH_URL']}/tokens"
+    os_defaults.username           = "#{ENV['OS_USERNAME']}"
+    os_defaults.password           = "#{ENV['OS_PASSWORD']}"
+    os_defaults.tenant_name        = "#{ENV['OS_TENANT_NAME']}"
+    os_defaults.keypair_name       = "<your keypair name>"
+    os_defaults.openstack_network_url = "https://region-b.geo-1.network.hpcloudsvc.com/v2.0"
+    os_defaults.openstack_image_url   = "https://region-b.geo-1.images.hpcloudsvc.com/v1.0"
+    floating_ip_pool = "Ext-Net"
+
+    os_defaults.http.read_timeout = 120
+  end
+  
+  config.vm.define :jenkins do |jenkins_config|
+    jenkins_config.vm.provider :openstack do |os|
+      os.flavor       = nodes['jenkins']['flavor']
+      os.image        = nodes['jenkins']['image']
+      os.networks     = [ { name: nodes['jenkins']['network'], address: nodes['jenkins']['ip'] } ]
+      os.floating_ip  = nodes['jenkins']['floating_ip']
+    end
+
+    config.vm.provision :shell, path: "../common_scripts/set_hostname.sh", args: [nodes['jenkins']['hostname'], "#{nodes['jenkins']['hostname']}.#{nodes['jenkins']['domain']}"]
+    config.vm.provision :shell, path: "../common_scripts/install_git.sh"
+    config.vm.provision :shell, path: "../common_scripts/clone_system_config.sh"
+    config.vm.provision :shell, path: "../common_scripts/install_puppet_and_modules.sh"
+    config.vm.provision :shell, path: "../common_scripts/configure_hiera.sh"
+    config.vm.provision :shell, path: "../common_scripts/run_puppet.sh"
+  end
+
+end
